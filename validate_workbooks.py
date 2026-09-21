@@ -9,6 +9,11 @@ import openpyxl
 root = Path(__file__).resolve().parent
 results = []
 for path in sorted(root.glob("*.xlsx")):
+    try:
+        zipfile.ZipFile(path).testzip()
+    except zipfile.BadZipFile:
+        # 非工作簿文件（例如平台返回的 HTML 响应被存成 .xlsx）直接跳过
+        continue
     workbook = openpyxl.load_workbook(path, read_only=False, data_only=False)
     cached_workbook = openpyxl.load_workbook(path, read_only=False, data_only=True)
     cached_errors = []
@@ -50,6 +55,9 @@ for path in sorted(root.glob("*.xlsx")):
         sector = cached_workbook["行业风险归因"]
         backtest = cached_workbook["风险回测"]
         portfolio_var = cached_workbook["组合分析"]["B25"].value
+        if sector["B42"].value is None:
+            # 空白底稿（任务文件）只检查结构，不检查结果值
+            continue
         assert math.isclose(sector["B42"].value, portfolio_var, rel_tol=1e-10)
         assert math.isclose(sector["B43"].value, portfolio_var, rel_tol=1e-10)
         assert math.isclose(sum(sector.cell(30, col).value for col in range(2, 8)), 1.0, rel_tol=1e-10)

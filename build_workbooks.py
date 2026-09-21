@@ -253,26 +253,31 @@ EXTENDED = calculate_extended_risk()
 
 
 def workbook_formats(workbook):
+    # 待填/结果单元格统一使用同一种样式：任务文件里是空白底稿，参考答案里填入公式，
+    # 两者外观完全一致，避免参考答案改动源文件背景色。
+    answer_cell = {"border": 1, "bg_color": "#FFF7E6", "font_color": "#3F3F3F"}
     return {
-        "title": workbook.add_format({"bold": True, "font_size": 16, "font_color": "#FFFFFF", "bg_color": "#1F4E78", "align": "center", "valign": "vcenter"}),
-        "section": workbook.add_format({"bold": True, "font_size": 11, "font_color": "#FFFFFF", "bg_color": "#2F75B5", "align": "left", "valign": "vcenter"}),
-        "header": workbook.add_format({"bold": True, "font_color": "#FFFFFF", "bg_color": "#4472C4", "border": 1, "align": "center", "valign": "vcenter", "text_wrap": True}),
-        "subheader": workbook.add_format({"bold": True, "bg_color": "#D9EAF7", "border": 1, "align": "center", "valign": "vcenter", "text_wrap": True}),
-        "label": workbook.add_format({"bold": True, "bg_color": "#E2F0D9", "border": 1}),
+        "title": workbook.add_format({"bold": True, "font_size": 12, "font_color": "#1F1F1F"}),
+        "section": workbook.add_format({"bold": True, "font_size": 11, "font_color": "#1F1F1F", "bg_color": "#EDEDED", "border": 1, "align": "left", "valign": "vcenter", "indent": 1}),
+        "header": workbook.add_format({"bold": True, "font_color": "#1F1F1F", "bg_color": "#E7E6E6", "border": 1, "align": "center", "valign": "vcenter", "text_wrap": True}),
+        "subheader": workbook.add_format({"bold": True, "bg_color": "#F5F5F5", "border": 1, "align": "center", "valign": "vcenter", "text_wrap": True}),
+        "label": workbook.add_format({"bg_color": "#F5F5F5", "border": 1}),
         "text": workbook.add_format({"border": 1, "valign": "vcenter"}),
         "text_center": workbook.add_format({"border": 1, "align": "center", "valign": "vcenter"}),
-        "input": workbook.add_format({"border": 1, "bg_color": "#FFF2CC", "font_color": "#7F6000"}),
+        "input": workbook.add_format(answer_cell),
         "date": workbook.add_format({"border": 1, "num_format": "yyyy-mm-dd", "align": "center"}),
         "money": workbook.add_format({"border": 1, "num_format": "¥#,##0;[Red]-¥#,##0"}),
         "number": workbook.add_format({"border": 1, "num_format": "0.00"}),
         "percent": workbook.add_format({"border": 1, "num_format": "0.00%;[Red]-0.00%"}),
         "percent1": workbook.add_format({"border": 1, "num_format": "0.0%;[Red]-0.0%"}),
-        "formula": workbook.add_format({"border": 1, "bg_color": "#EAF2F8", "num_format": "0.00"}),
-        "formula_pct": workbook.add_format({"border": 1, "bg_color": "#EAF2F8", "num_format": "0.00%;[Red]-0.00%"}),
-        "formula_money": workbook.add_format({"border": 1, "bg_color": "#EAF2F8", "num_format": "¥#,##0;[Red]-¥#,##0"}),
-        "note": workbook.add_format({"font_color": "#666666", "italic": True, "text_wrap": True, "valign": "top"}),
-        "kpi_label": workbook.add_format({"bold": True, "font_color": "#FFFFFF", "bg_color": "#5B9BD5", "border": 1, "align": "center", "valign": "vcenter"}),
-        "kpi_value": workbook.add_format({"bold": True, "font_size": 14, "bg_color": "#DDEBF7", "border": 1, "align": "center", "valign": "vcenter", "num_format": "0.00%;[Red]-0.00%"}),
+        "formula": workbook.add_format({**answer_cell, "num_format": "0.00"}),
+        "formula_pct": workbook.add_format({**answer_cell, "num_format": "0.00%;[Red]-0.00%"}),
+        "formula_money": workbook.add_format({**answer_cell, "num_format": "¥#,##0;[Red]-¥#,##0"}),
+        "cell_text": workbook.add_format({**answer_cell, "valign": "vcenter"}),
+        "cell_center": workbook.add_format({**answer_cell, "align": "center", "valign": "vcenter"}),
+        "note": workbook.add_format({"font_color": "#595959", "text_wrap": True, "valign": "top"}),
+        "kpi_label": workbook.add_format({"bold": True, "font_color": "#1F1F1F", "bg_color": "#E7E6E6", "border": 1, "align": "center", "valign": "vcenter", "text_wrap": True}),
+        "kpi_value": workbook.add_format({**answer_cell, "bold": True, "font_size": 12, "align": "center", "valign": "vcenter", "num_format": "0.00%;[Red]-0.00%"}),
     }
 
 
@@ -285,7 +290,7 @@ def configure_sheet(ws, freeze=(1, 0), zoom=90):
 def write_raw_data(workbook, formats):
     ws = workbook.add_worksheet("原始行情")
     configure_sheet(ws, freeze=(2, 0), zoom=85)
-    ws.merge_range("A1:G1", "模拟股票月度行情（数据已完整提供，无需外部检索）", formats["title"])
+    ws.merge_range("A1:G1", "模拟股票月度行情", formats["title"])
     headers = ["日期", "股票代码", "股票名称", "行业", "收盘价", "当月现金分红", "基准指数收盘"]
     ws.write_row("A2", headers, formats["header"])
     for row_idx, row in enumerate(MARKET_ROWS, start=2):
@@ -300,9 +305,12 @@ def write_raw_data(workbook, formats):
     ws.autofilter(1, 0, len(MARKET_ROWS) + 1, 6)
     ws.set_column("A:A", 12)
     ws.set_column("B:B", 11)
-    ws.set_column("C:C", 14)
-    ws.set_column("D:D", 10)
-    ws.set_column("E:G", 15)
+    ws.set_column("C:C", 12)
+    ws.set_column("D:D", 9)
+    ws.set_column("E:E", 11)
+    ws.set_column("F:F", 14)
+    ws.set_column("G:G", 14)
+    ws.set_row(1, 26)
 
 
 def write_parameters(workbook, formats):
@@ -347,19 +355,19 @@ def write_parameters(workbook, formats):
             ws.write_number(row_offset, col_idx, SCENARIOS[scenario][sector], formats["percent"])
 
     ws.set_column("A:A", 18)
-    ws.set_column("B:B", 16)
-    ws.set_column("C:C", 38)
+    ws.set_column("B:B", 14)
+    ws.set_column("C:C", 40)
     ws.set_column("D:D", 13)
     ws.set_column("E:E", 13)
     ws.set_column("F:G", 13)
+    ws.set_row(1, 26)
 
 
 def write_analysis_template(workbook, formats, answer: bool):
     ws = workbook.add_worksheet("组合分析")
     configure_sheet(ws, freeze=(5, 0), zoom=80)
-    ws.merge_range("A1:Q1", "股票组合收益与风险分析", formats["title"])
-    ws.merge_range("A2:Q2", "蓝色单元格为公式结果；所有收益率、风险指标与贡献值均应保持公式联动。", formats["note"])
-    headers = ["股票代码", "股票名称", "行业", "最新价", "期初价", "累计收益率", "年化收益率", "年化波动率", "Beta", "CAPM期望收益", "Alpha", "仅基于负月收益的年化下行波动率", "目标权重", "加权收益贡献", "加权Beta贡献", "月度VaR贡献", "配置判断"]
+    ws.merge_range("A1:Q1", "股票组合分析", formats["title"])
+    headers = ["股票代码", "股票名称", "行业", "最新价", "期初价", "累计收益率", "年化收益率", "年化波动率", "Beta", "CAPM期望收益", "Alpha", "仅基于负月收益的年化下行波动率", "目标权重", "加权收益贡献", "加权Beta贡献", "95%单尾月度VaR贡献", "配置判断"]
     ws.write_row("A5", headers, formats["header"])
 
     for stock_idx, (code, name, sector, weight) in enumerate(STOCKS):
@@ -387,10 +395,11 @@ def write_analysis_template(workbook, formats, answer: bool):
             ws.write_formula(row, 14, f"=M{excel_row}*I{excel_row}", formats["formula"], metrics["weighted_beta"])
             ws.write_formula(row, 15, f"=M{excel_row}*'参数设置'!$B$3*'参数设置'!$B$7*H{excel_row}/SQRT(12)", formats["formula_money"], metrics["var_contribution"])
             judgment = "增配观察" if metrics["alpha"] > 0.015 and metrics["beta"] < 1.15 else "维持" if metrics["alpha"] > -0.01 else "降低暴露"
-            ws.write_formula(row, 16, f'=IF(AND(K{excel_row}>1.5%,I{excel_row}<1.15),"增配观察",IF(K{excel_row}>-1%,"维持","降低暴露"))', formats["text_center"], judgment)
+            ws.write_formula(row, 16, f'=IF(AND(K{excel_row}>1.5%,I{excel_row}<1.15),"增配观察",IF(K{excel_row}>-1%,"维持","降低暴露"))', formats["cell_center"], judgment)
         else:
             for col in range(3, 17):
-                ws.write_blank(row, col, None, formats["input"])
+                blank_fmt = formats["cell_center"] if col == 16 else formats["input"]
+                ws.write_blank(row, col, None, blank_fmt)
 
     ws.write("A20", "组合汇总", formats["section"])
     summary = [
@@ -413,22 +422,41 @@ def write_analysis_template(workbook, formats, answer: bool):
 
     ws.conditional_format("K6:K17", {"type": "3_color_scale", "min_color": "#F8696B", "mid_color": "#FFEB84", "max_color": "#63BE7B"})
     ws.conditional_format("P6:P17", {"type": "data_bar", "bar_color": "#5B9BD5"})
-    ws.set_column("A:A", 11)
-    ws.set_column("B:B", 14)
-    ws.set_column("C:C", 9)
-    ws.set_column("D:P", 14)
-    ws.set_column("Q:Q", 13)
-    ws.set_row(0, 26)
+    ws.set_column("A:A", 16)
+    ws.set_column("B:B", 12)
+    ws.set_column("C:C", 8)
+    ws.set_column("D:D", 11)
+    ws.set_column("E:E", 11)
+    ws.set_column("F:F", 12)
+    ws.set_column("G:G", 12)
+    ws.set_column("H:H", 12)
+    ws.set_column("I:I", 8)
+    ws.set_column("J:J", 13)
+    ws.set_column("K:K", 10)
+    ws.set_column("L:L", 20)
+    ws.set_column("M:M", 11)
+    ws.set_column("N:N", 13)
+    ws.set_column("O:O", 13)
+    ws.set_column("P:P", 16)
+    ws.set_column("Q:Q", 12)
+    ws.set_row(0, 22)
+    ws.set_row(4, 46)
 
 
-def write_monthly_returns(workbook, formats):
+def write_monthly_returns(workbook, formats, answer: bool):
     ws = workbook.add_worksheet("月度收益")
     configure_sheet(ws, freeze=(1, 1), zoom=78)
     headers = ["月份"] + [stock[0] for stock in STOCKS] + ["基准月收益率", "组合月收益率", "组合累计净值", "基准累计净值", "组合回撤"]
     ws.write_row("A1", headers, formats["header"])
+    column_formats = [formats["formula_pct"]] * 12 + [formats["formula_pct"], formats["formula_pct"],
+                                                       formats["formula"], formats["formula"], formats["formula_pct"]]
     for month_idx in range(1, len(DATES)):
         row = month_idx
         ws.write_datetime(row, 0, DATES[month_idx], formats["date"])
+        if not answer:
+            for offset, fmt in enumerate(column_formats):
+                ws.write_blank(row, offset + 1, None, fmt)
+            continue
         for stock_idx, (code, _, _, _) in enumerate(STOCKS):
             current_raw = 3 + month_idx * len(STOCKS) + stock_idx
             previous_raw = 3 + (month_idx - 1) * len(STOCKS) + stock_idx
@@ -449,15 +477,19 @@ def write_monthly_returns(workbook, formats):
         ws.write_formula(row, 16, bench_nav_formula, formats["formula"], benchmark_nav)
         ws.write_formula(row, 17, f"=P{row + 1}/MAX($P$2:P{row + 1})-1", formats["formula_pct"], drawdown)
     ws.set_column("A:A", 12)
-    ws.set_column("B:R", 13)
+    ws.set_column("B:M", 11)
+    ws.set_column("N:N", 13)
+    ws.set_column("O:O", 13)
+    ws.set_column("P:Q", 13)
+    ws.set_column("R:R", 12)
+    ws.set_row(0, 30)
     ws.conditional_format("R2:R24", {"type": "data_bar", "bar_color": "#C00000", "bar_negative_color": "#C00000"})
 
 
 def write_stress_template(workbook, formats, answer: bool):
     ws = workbook.add_worksheet("压力测试")
     configure_sheet(ws, freeze=(4, 0), zoom=85)
-    ws.merge_range("A1:G1", "股票组合情景压力测试", formats["title"])
-    ws.merge_range("A2:G2", "按行业冲击映射至每只股票，计算持仓市值和情景损益；负值代表亏损。", formats["note"])
+    ws.merge_range("A1:G1", "压力测试", formats["title"])
     ws.write_row("A4", ["情景", "股票代码", "行业", "目标权重", "行业冲击", "持仓市值", "情景损益"], formats["header"])
     row = 4
     for scenario_idx, scenario in enumerate(SCENARIOS):
@@ -490,27 +522,29 @@ def write_stress_template(workbook, formats, answer: bool):
             ws.write_formula(row_idx, 10, f"=SUM(G{start_row}:G{end_row})", formats["formula_money"], total_loss)
             ws.write_formula(row_idx, 11, f"=K{row_idx + 1}/'参数设置'!$B$3", formats["formula_pct"], total_loss / 10_000_000)
             label = "高风险" if total_loss / 10_000_000 <= -0.15 else "中风险" if total_loss < 0 else "正向情景"
-            ws.write_formula(row_idx, 12, f'=IF(L{row_idx + 1}<=-15%,"高风险",IF(L{row_idx + 1}<0,"中风险","正向情景"))', formats["text_center"], label)
+            ws.write_formula(row_idx, 12, f'=IF(L{row_idx + 1}<=-15%,"高风险",IF(L{row_idx + 1}<0,"中风险","正向情景"))', formats["cell_center"], label)
         else:
             ws.write_blank(row_idx, 10, None, formats["input"])
             ws.write_blank(row_idx, 11, None, formats["input"])
-            ws.write_blank(row_idx, 12, None, formats["input"])
+            ws.write_blank(row_idx, 12, None, formats["cell_center"])
 
     ws.conditional_format("G5:G40", {"type": "3_color_scale", "min_color": "#F8696B", "mid_color": "#FFEB84", "max_color": "#63BE7B"})
     ws.set_column("A:A", 15)
-    ws.set_column("B:C", 12)
-    ws.set_column("D:E", 13)
-    ws.set_column("F:G", 16)
+    ws.set_column("B:B", 11)
+    ws.set_column("C:C", 9)
+    ws.set_column("D:E", 11)
+    ws.set_column("F:G", 14)
     ws.set_column("H:I", 3)
-    ws.set_column("J:J", 15)
+    ws.set_column("J:J", 14)
     ws.set_column("K:L", 15)
-    ws.set_column("M:M", 13)
+    ws.set_column("M:M", 12)
+    ws.set_row(3, 26)
 
 
 def write_dashboard(workbook, formats, answer: bool):
     ws = workbook.add_worksheet("投资仪表盘")
     configure_sheet(ws, freeze=(0, 0), zoom=85)
-    ws.merge_range("A1:L1", "股票组合投资仪表盘", formats["title"])
+    ws.merge_range("A1:L1", "投资仪表盘", formats["title"])
     kpis = [
         ("组合年化收益率", "='组合分析'!B22", RESULTS["portfolio_annual"]),
         ("组合年化波动率", "='组合分析'!B23", RESULTS["portfolio_vol"]),
@@ -524,23 +558,24 @@ def write_dashboard(workbook, formats, answer: bool):
             ws.merge_range(3, start_col, 4, start_col + 1, "", formats["kpi_value"])
             ws.write_formula(3, start_col, formula, formats["kpi_value"], value)
         else:
-            ws.merge_range(3, start_col, 4, start_col + 1, "", formats["input"])
+            ws.merge_range(3, start_col, 4, start_col + 1, "", formats["kpi_value"])
 
-    ws.write("A7", "风险贡献最高的 5 只股票", formats["section"])
-    ws.write_row("A8", ["排名", "股票代码", "股票名称", "目标权重", "月度VaR贡献"], formats["header"])
+    ws.write("A7", "VaR贡献前五持仓", formats["section"])
+    ws.write_row("A8", ["排名", "股票代码", "股票名称", "目标权重", "95%单尾月度VaR贡献"], formats["header"])
     ranked = sorted(STOCKS, key=lambda item: RESULTS["metrics"][item[0]]["var_contribution"], reverse=True)[:5]
     for idx, stock in enumerate(ranked, start=1):
         row = 7 + idx
         source_row = 6 + [item[0] for item in STOCKS].index(stock[0])
         ws.write_number(row, 0, idx, formats["text_center"])
         if answer:
-            ws.write_formula(row, 1, f"='组合分析'!A{source_row}", formats["text_center"], stock[0])
-            ws.write_formula(row, 2, f"='组合分析'!B{source_row}", formats["text"], stock[1])
+            ws.write_formula(row, 1, f"='组合分析'!A{source_row}", formats["cell_center"], stock[0])
+            ws.write_formula(row, 2, f"='组合分析'!B{source_row}", formats["cell_text"], stock[1])
             ws.write_formula(row, 3, f"='组合分析'!M{source_row}", formats["formula_pct"], stock[3])
             ws.write_formula(row, 4, f"='组合分析'!P{source_row}", formats["formula_money"], RESULTS["metrics"][stock[0]]["var_contribution"])
         else:
+            blanks = {1: formats["cell_center"], 2: formats["cell_text"], 3: formats["formula_pct"], 4: formats["formula_money"]}
             for col in range(1, 5):
-                ws.write_blank(row, col, None, formats["input"])
+                ws.write_blank(row, col, None, blanks[col])
 
     if answer:
         line_chart = workbook.add_chart({"type": "line"})
@@ -565,21 +600,28 @@ def write_dashboard(workbook, formats, answer: bool):
     ws.set_column("A:A", 9)
     ws.set_column("B:B", 12)
     ws.set_column("C:C", 14)
-    ws.set_column("D:E", 15)
+    ws.set_column("D:D", 15)
+    ws.set_column("E:E", 16)
     ws.set_column("F:F", 3)
     ws.set_column("G:L", 13)
-    ws.set_row(0, 28)
+    ws.set_row(0, 22)
+    ws.set_row(2, 30)
+    ws.set_row(7, 30)
 
 
-def write_sector_risk(workbook, formats):
+def write_sector_risk(workbook, formats, answer: bool):
     ws = workbook.add_worksheet("行业风险归因")
     configure_sheet(ws, freeze=(3, 1), zoom=85)
-    ws.merge_range("A1:K1", "六行业协方差风险归因", formats["title"])
+    ws.merge_range("A1:K1", "行业风险归因", formats["title"])
     ws.write_row("A3", ["月末"] + EXTENDED["sectors"] + ["加权组合收益"], formats["header"])
     for month_idx, date in enumerate(DATES[1:]):
         row = month_idx + 3
         excel_row = row + 1
         ws.write_datetime(row, 0, date, formats["date"])
+        if not answer:
+            for col in range(1, 8):
+                ws.write_blank(row, col, None, formats["formula_pct"])
+            continue
         for sector_idx in range(6):
             first = sector_idx * 2
             a = xlsxwriter.utility.xl_col_to_name(first + 1)
@@ -602,25 +644,36 @@ def write_sector_risk(workbook, formats):
         row = idx + 32
         excel_row = row + 1
         ws.write(28, idx + 1, sector, formats["header"])
-        ws.write_formula(29, idx + 1, f"=SUM('参数设置'!E{first + 4}:E{first + 5})",
-                         formats["formula_pct"], EXTENDED["weights"][idx])
+        if answer:
+            ws.write_formula(29, idx + 1, f"=SUM('参数设置'!E{first + 4}:E{first + 5})",
+                             formats["formula_pct"], EXTENDED["weights"][idx])
+        else:
+            ws.write_blank(29, idx + 1, None, formats["formula_pct"])
         ws.write(31, idx + 1, sector, formats["header"])
         ws.write(row, 0, sector, formats["label"])
         for other in range(6):
             other_col = xlsxwriter.utility.xl_col_to_name(other + 1)
-            ws.write_formula(row, other + 1,
-                             f"=COVARIANCE.S({col}$4:{col}$26,{other_col}$4:{other_col}$26)",
-                             formats["formula"], EXTENDED["matrix"][idx][other])
-        ws.write_formula(row, 7, f"=SUMPRODUCT(B{excel_row}:G{excel_row},$B$30:$G$30)",
-                         formats["formula"], EXTENDED["weighted_cov"][idx])
-        ws.write_formula(row, 8,
-                         f"={col}$30*H{excel_row}*'参数设置'!$B$3*'参数设置'!$B$7/SQRT($B$41)",
-                         formats["formula_money"], EXTENDED["component"][idx])
-        ws.write_formula(row, 9, f"=I{excel_row}/{col}$30", formats["formula_money"],
-                         EXTENDED["component"][idx] / EXTENDED["weights"][idx])
-        ws.write_formula(row, 10,
-                         f"={col}$30*STDEV.S({col}$4:{col}$26)*'参数设置'!$B$3*'参数设置'!$B$7",
-                         formats["formula_money"], EXTENDED["standalone"][idx])
+            if answer:
+                ws.write_formula(row, other + 1,
+                                 f"=COVARIANCE.S({col}$4:{col}$26,{other_col}$4:{other_col}$26)",
+                                 formats["formula"], EXTENDED["matrix"][idx][other])
+            else:
+                ws.write_blank(row, other + 1, None, formats["formula"])
+        if answer:
+            ws.write_formula(row, 7, f"=SUMPRODUCT(B{excel_row}:G{excel_row},$B$30:$G$30)",
+                             formats["formula"], EXTENDED["weighted_cov"][idx])
+            ws.write_formula(row, 8,
+                             f"={col}$30*H{excel_row}*'参数设置'!$B$3*'参数设置'!$B$7/SQRT($B$41)",
+                             formats["formula_money"], EXTENDED["component"][idx])
+            ws.write_formula(row, 9, f"=I{excel_row}/{col}$30", formats["formula_money"],
+                             EXTENDED["component"][idx] / EXTENDED["weights"][idx])
+            ws.write_formula(row, 10,
+                             f"={col}$30*STDEV.S({col}$4:{col}$26)*'参数设置'!$B$3*'参数设置'!$B$7",
+                             formats["formula_money"], EXTENDED["standalone"][idx])
+        else:
+            ws.write_blank(row, 7, None, formats["formula"])
+            for col_idx in range(8, 11):
+                ws.write_blank(row, col_idx, None, formats["formula_money"])
 
     summary = [
         ("组合月方差", "=B30*H33+C30*H34+D30*H35+E30*H36+F30*H37+G30*H38",
@@ -635,18 +688,23 @@ def write_sector_risk(workbook, formats):
     ]
     for row_idx, (label, formula, value, fmt) in enumerate(summary, start=40):
         ws.write(row_idx, 0, label, formats["label"])
-        ws.write_formula(row_idx, 1, formula, formats[fmt], value)
+        if answer:
+            ws.write_formula(row_idx, 1, formula, formats["cell_text"] if fmt == "text" else formats[fmt], value)
+        else:
+            ws.write_blank(row_idx, 1, None, formats["cell_text"] if fmt == "text" else formats[fmt])
     ws.conditional_format("I33:I38", {"type": "data_bar", "bar_color": "#5B9BD5"})
-    ws.set_column("A:A", 20)
-    ws.set_column("B:G", 15)
-    ws.set_column("H:H", 15)
-    ws.set_column("I:K", 18)
+    ws.set_column("A:A", 18)
+    ws.set_column("B:G", 14)
+    ws.set_column("H:H", 14)
+    ws.set_column("I:K", 16)
+    ws.set_row(2, 26)
+    ws.set_row(31, 26)
 
 
-def write_risk_backtest(workbook, formats):
+def write_risk_backtest(workbook, formats, answer: bool):
     ws = workbook.add_worksheet("风险回测")
     configure_sheet(ws, freeze=(3, 1), zoom=85)
-    ws.merge_range("A1:J1", "单步前瞻风险回测（前12个月预测下一月）", formats["title"])
+    ws.merge_range("A1:J1", "风险回测", formats["title"])
     ws.write_row("A3", ["检验月末", "实际组合月收益", "前12月年化波动", "前12月Beta",
                          "前12月跟踪误差", "90%历史VaR率", "90%历史ES率", "VaR突破",
                          "前12月信息比率", "实际损失率"], formats["header"])
@@ -654,8 +712,11 @@ def write_risk_backtest(workbook, formats):
     for month_idx, date in enumerate(DATES[1:]):
         row = month_idx + 3
         ws.write_datetime(row, 13, date, formats["date"])
-        ws.write_formula(row, 14, f"='月度收益'!O{month_idx + 2}-'月度收益'!N{month_idx + 2}",
-                         formats["formula_pct"], EXTENDED["active"][month_idx])
+        if answer:
+            ws.write_formula(row, 14, f"='月度收益'!O{month_idx + 2}-'月度收益'!N{month_idx + 2}",
+                             formats["formula_pct"], EXTENDED["active"][month_idx])
+        else:
+            ws.write_blank(row, 14, None, formats["formula_pct"])
 
     for idx, metrics in enumerate(EXTENDED["backtest"]):
         row = idx + 3
@@ -668,6 +729,12 @@ def write_risk_backtest(workbook, formats):
         active = f"$O${helper_start}:$O${helper_end}"
         observed, vol, beta, te, var90, es90, breach, ir, loss = metrics
         ws.write_datetime(row, 0, DATES[month_row - 1], formats["date"])
+        if not answer:
+            for col, fmt in ((1, "formula_pct"), (2, "formula_pct"), (3, "formula"),
+                             (4, "formula_pct"), (5, "formula_pct"), (6, "formula_pct"),
+                             (7, "formula"), (8, "formula"), (9, "formula_pct")):
+                ws.write_blank(row, col, None, formats[fmt])
+            continue
         formulas = [
             (1, f"='月度收益'!O{month_row}", "formula_pct", observed),
             (2, f"=STDEV.S({window})*SQRT(12)", "formula_pct", vol),
@@ -691,24 +758,37 @@ def write_risk_backtest(workbook, formats):
     ]
     for row_idx, (label, formula, value, fmt) in enumerate(summary, start=16):
         ws.write(row_idx, 0, label, formats["label"])
-        ws.write_formula(row_idx, 1, formula, formats[fmt], value)
+        if answer:
+            ws.write_formula(row_idx, 1, formula, formats["cell_text"] if fmt == "text" else formats[fmt], value)
+        else:
+            ws.write_blank(row_idx, 1, None, formats["cell_text"] if fmt == "text" else formats[fmt])
     ws.conditional_format("H4:H14", {"type": "cell", "criteria": ">=", "value": 1,
                                      "format": workbook.add_format({"bg_color": "#F8696B", "font_color": "#9C0006"})})
-    chart = workbook.add_chart({"type": "line"})
-    chart.add_series({"name": "90%历史VaR率", "categories": "='风险回测'!$A$4:$A$14",
-                      "values": "='风险回测'!$F$4:$F$14"})
-    chart.add_series({"name": "实际损失率", "categories": "='风险回测'!$A$4:$A$14",
-                      "values": "='风险回测'!$J$4:$J$14"})
-    chart.set_title({"name": "历史VaR与实际损失"})
-    chart.set_x_axis({"name": "月末", "date_axis": True, "num_format": "yyyy-mm"})
-    chart.set_y_axis({"name": "损失率", "num_format": "0%", "major_gridlines": {"visible": False}})
-    chart.set_legend({"position": "bottom"})
-    ws.insert_chart("D17", chart, {"x_scale": 1.4, "y_scale": 1.15})
+    if answer:
+        chart = workbook.add_chart({"type": "line"})
+        chart.add_series({"name": "90%历史VaR率", "categories": "='风险回测'!$A$4:$A$14",
+                          "values": "='风险回测'!$F$4:$F$14"})
+        chart.add_series({"name": "实际损失率", "categories": "='风险回测'!$A$4:$A$14",
+                          "values": "='风险回测'!$J$4:$J$14"})
+        chart.set_title({"name": "历史VaR与实际损失"})
+        chart.set_x_axis({"name": "月末", "date_axis": True, "num_format": "yyyy-mm"})
+        chart.set_y_axis({"name": "损失率", "num_format": "0%", "major_gridlines": {"visible": False}})
+        chart.set_legend({"position": "bottom"})
+        ws.insert_chart("D17", chart, {"x_scale": 1.4, "y_scale": 1.15})
     ws.set_column("A:A", 16)
-    ws.set_column("B:J", 18)
+    ws.set_column("B:B", 15)
+    ws.set_column("C:C", 15)
+    ws.set_column("D:D", 12)
+    ws.set_column("E:E", 15)
+    ws.set_column("F:F", 14)
+    ws.set_column("G:G", 14)
+    ws.set_column("H:H", 10)
+    ws.set_column("I:I", 14)
+    ws.set_column("J:J", 12)
     ws.set_column("K:M", 3)
-    ws.set_column("N:O", 17)
-    ws.set_row(2, 36)
+    ws.set_column("N:N", 17)
+    ws.set_column("O:O", 14)
+    ws.set_row(2, 42)
 
 
 def build_workbook(path: Path, answer: bool):
@@ -723,13 +803,11 @@ def build_workbook(path: Path, answer: bool):
     write_raw_data(workbook, formats)
     write_parameters(workbook, formats)
     write_analysis_template(workbook, formats, answer=answer)
-    if answer:
-        write_monthly_returns(workbook, formats)
+    write_monthly_returns(workbook, formats, answer=answer)
     write_stress_template(workbook, formats, answer=answer)
     write_dashboard(workbook, formats, answer=answer)
-    if answer:
-        write_sector_risk(workbook, formats)
-        write_risk_backtest(workbook, formats)
+    write_sector_risk(workbook, formats, answer=answer)
+    write_risk_backtest(workbook, formats, answer=answer)
     workbook.close()
 
 
