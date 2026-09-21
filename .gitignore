@@ -1,0 +1,7 @@
+__pycache__/
+*.pyc
+_analysis*.json
+_analysis*.txt
+~$*.xlsx
+.DS_Store
+
