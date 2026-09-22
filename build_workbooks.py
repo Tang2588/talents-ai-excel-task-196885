@@ -253,15 +253,16 @@ EXTENDED = calculate_extended_risk()
 
 
 def workbook_formats(workbook):
-    # 待填/结果单元格统一使用同一种样式：任务文件里是空白底稿，参考答案里填入公式，
-    # 两者外观完全一致，避免参考答案改动源文件背景色。
-    answer_cell = {"border": 1, "bg_color": "#FFF7E6", "font_color": "#3F3F3F"}
+    # prompt 只对「组合分析」Alpha 三色、VaR 贡献数据条、风险回测 H4:H14 突破值提了颜色要求，
+    # 因此除这三处条件格式外不使用任何单元格背景色；字体统一为默认字体与字号，
+    # 仅标题、分区行与表头行加粗，任务文件与参考答案逐格样式完全一致。
+    answer_cell = {"border": 1}
     return {
-        "title": workbook.add_format({"bold": True, "font_size": 12, "font_color": "#1F1F1F"}),
-        "section": workbook.add_format({"bold": True, "font_size": 11, "font_color": "#1F1F1F", "bg_color": "#EDEDED", "border": 1, "align": "left", "valign": "vcenter", "indent": 1}),
-        "header": workbook.add_format({"bold": True, "font_color": "#1F1F1F", "bg_color": "#E7E6E6", "border": 1, "align": "center", "valign": "vcenter", "text_wrap": True}),
-        "subheader": workbook.add_format({"bold": True, "bg_color": "#F5F5F5", "border": 1, "align": "center", "valign": "vcenter", "text_wrap": True}),
-        "label": workbook.add_format({"bg_color": "#F5F5F5", "border": 1}),
+        "title": workbook.add_format({"bold": True}),
+        "section": workbook.add_format({"bold": True, "border": 1, "align": "left", "valign": "vcenter", "indent": 1}),
+        "header": workbook.add_format({"bold": True, "border": 1, "align": "center", "valign": "vcenter", "text_wrap": True}),
+        "subheader": workbook.add_format({"bold": True, "border": 1, "align": "center", "valign": "vcenter", "text_wrap": True}),
+        "label": workbook.add_format({"border": 1}),
         "text": workbook.add_format({"border": 1, "valign": "vcenter"}),
         "text_center": workbook.add_format({"border": 1, "align": "center", "valign": "vcenter"}),
         "input": workbook.add_format(answer_cell),
@@ -275,9 +276,9 @@ def workbook_formats(workbook):
         "formula_money": workbook.add_format({**answer_cell, "num_format": "¥#,##0;[Red]-¥#,##0"}),
         "cell_text": workbook.add_format({**answer_cell, "valign": "vcenter"}),
         "cell_center": workbook.add_format({**answer_cell, "align": "center", "valign": "vcenter"}),
-        "note": workbook.add_format({"font_color": "#595959", "text_wrap": True, "valign": "top"}),
-        "kpi_label": workbook.add_format({"bold": True, "font_color": "#1F1F1F", "bg_color": "#E7E6E6", "border": 1, "align": "center", "valign": "vcenter", "text_wrap": True}),
-        "kpi_value": workbook.add_format({**answer_cell, "bold": True, "font_size": 12, "align": "center", "valign": "vcenter", "num_format": "0.00%;[Red]-0.00%"}),
+        "note": workbook.add_format({"text_wrap": True, "valign": "top"}),
+        "kpi_label": workbook.add_format({"bold": True, "border": 1, "align": "center", "valign": "vcenter", "text_wrap": True}),
+        "kpi_value": workbook.add_format({**answer_cell, "align": "center", "valign": "vcenter", "num_format": "0.00%;[Red]-0.00%"}),
     }
 
 
